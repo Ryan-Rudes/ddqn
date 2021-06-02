@@ -1,10 +1,10 @@
-game: "Breakout"
+game: "Pong"
 decay_duration: 1000000
 memory_length: 1000000
 duration: 50000000
 minibatch_size: 32
 gamma: 0.99
-tau: 10000
+tau: 1000
 lr: 0.00025
 mineps: 0.1
 maxeps: 1.0

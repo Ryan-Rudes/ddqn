@@ -1,0 +1,11 @@
+game: "CartPole-v0"
+memory_length: 20000
+duration: 50000000
+minibatch_size: 20
+gamma: 0.995
+lr: 0.001
+mineps: 0.01
+maxeps: 1.0
+render: False
+checkpoint_freq: 1000000000
+exploration_decay: 0.995

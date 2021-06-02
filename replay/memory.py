@@ -17,6 +17,9 @@ class Memory:
     def __getitem__(self, i):
         return self.buffer[i]
 
+    def __setitem__(self, i, value):
+        self.buffer[i] = value
+
     def __len__(self):
         return self.length
 

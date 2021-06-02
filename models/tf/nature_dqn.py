@@ -2,7 +2,7 @@ from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 
 class NatureDQN(Model):
-    def __init__(self, num_actions):
+    def __init__(self, num_actions):#, weightnorm=False):
         super().__init__()
 
         self.num_actions = num_actions
@@ -15,6 +15,14 @@ class NatureDQN(Model):
 
         self.dense1 = Dense(512, activation = 'relu')
         self.dense2 = Dense(num_actions)
+
+        """
+        if weightnorm:
+            from tensorflow_addons.layers import WeightNormalization
+
+            for attr in ['conv1', 'conv2', 'conv3', 'dense1', 'dense2']:
+                setattr(self, attr, WeightNormalization(getattr(self, attr)))
+        """
 
     def call(self, input):
         x = self.conv1(input)

@@ -2,7 +2,7 @@ from replay.memory import Memory
 import numpy as np
 
 class ReplayMemory:
-    def __init__(self, maxlen, shape):
+    def __init__(self, maxlen, shape, dtype=np.uint8):
         self.maxlen = maxlen
         self.nextup = 0
         self.length = 0
@@ -10,7 +10,7 @@ class ReplayMemory:
 
         self.shape = shape
 
-        self.states = Memory(maxlen * 2, shape, dtype = np.uint8)
+        self.states = Memory(maxlen * 2, shape, dtype = dtype)
         self.actions = Memory(maxlen, None, dtype = int)
         self.rewards = Memory(maxlen, None, dtype = float)
         self.terminals = Memory(maxlen, None, dtype = bool)
@@ -23,13 +23,6 @@ class ReplayMemory:
         self.actions.append(action)
         self.rewards.append(reward)
         self.terminals.append(terminal)
-
-    def sample(self, n, replace=False):
-        if replace == 'auto':
-            replace = self.length < n
-
-        indices = self.rndgen.choice(self.length, size = n, replace = replace)
-        return [self.buffer[idx] for idx in indices]
 
     def sample(self, n, replace = True):
         if replace == 'auto':
@@ -50,9 +43,9 @@ class ReplayMemory:
             rewards.append(self.rewards[index])
             terminals.append(self.terminals[index])
 
-        states = np.array(states) / 255.0
+        states = np.array(states)
         actions = np.array(actions)
-        next_states = np.array(next_states) / 255.0
+        next_states = np.array(next_states)
         rewards = np.array(rewards)
         terminals = np.array(terminals)
 

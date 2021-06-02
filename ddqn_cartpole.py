@@ -1,9 +1,7 @@
-from gym.wrappers.atari_preprocessing import AtariPreprocessing
-from wrappers.video_recorder import VideoRecorder
-from annealing.linear import LinearDecaySchedule
+from annealing.exponential import ExponentialDecaySchedule
+from models.tf.cartpole_dqn import CartPoleDQN
 from replay.replay_memory import ReplayMemory
-from wrappers.frame_stack import FrameStack
-from trainers.tf.dqn import DQNTrainer
+from trainers.tf.ddqn import DoubleDQNTrainer
 from rich.progress import *
 from utils import pbar
 from time import time
@@ -14,21 +12,19 @@ from tensorflow.keras.optimizers import Adam
 import hydra
 import gym
 
-@hydra.main(config_name='config')
+@hydra.main(config_name='config_cartpole')
 def main(cfg):
-    env = gym.make(cfg.game + "NoFrameskip-v0")
-    env = VideoRecorder(env, fps = 60)
-    env = AtariPreprocessing(env)
-    env = FrameStack(env)
+    env = gym.make("CartPole-v1")
+    memory = ReplayMemory(cfg.memory_length, (4,), dtype = 'float32')
+    schedule = ExponentialDecaySchedule(mineps = cfg.mineps, maxeps = cfg.maxeps, decay = cfg.exploration_decay)
 
-    memory = ReplayMemory(cfg.memory_length, (84, 84, 4))
-    schedule = LinearDecaySchedule(mineps = cfg.mineps, maxeps = cfg.maxeps, length = cfg.decay_duration)
-
-    trainer = DQNTrainer(
+    trainer = DoubleDQNTrainer(
         optimizer = Adam(learning_rate = cfg.lr),
         criterion = MeanSquaredError(),
         num_actions = env.action_space.n,
-        gamma = cfg.gamma
+        gamma = cfg.gamma,
+        modelfn = lambda: CartPoleDQN(),
+        atari = False
     )
 
     start = time()
@@ -36,21 +32,26 @@ def main(cfg):
     with pbar() as progress:
         task = progress.add_task("Training...", total = cfg.duration)
 
+        highscore = 0
         steps = 0
         frames = []
+        episode = 1
 
         while steps < cfg.duration:
             state = env.reset()
             terminal = False
+            score = 0
 
             while not terminal:
                 action = trainer.act(state, schedule.epsilon)
                 next_state, reward, terminal, info = env.step(action)
+                score += reward
+                highscore = max(highscore, score)
                 steps += 1
                 progress.advance(task)
                 if cfg.render:
                     env.render()
-                schedule.update()
+
                 memory.append(state, action, next_state, reward, terminal)
                 state = next_state
 
@@ -60,7 +61,11 @@ def main(cfg):
                 if memory.exceeds(cfg.minibatch_size):
                     minibatch = memory.sample(cfg.minibatch_size)
                     loss = trainer.replay(*minibatch)
-                    progress.print(f"Loss: {loss:.10f}")
+                    schedule.update()
+                    progress.print(f"Episode: {episode}, Epsilon: {schedule.epsilon:.10f} Highscore: {highscore}")
+
+            trainer.update_target()
+            episode += 1
         else:
             env.close()
 

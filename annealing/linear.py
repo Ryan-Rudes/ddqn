@@ -1,4 +1,4 @@
-from epsilon_decay.schedule import Schedule
+from annealing.schedule import Schedule
 
 class LinearDecaySchedule(Schedule):
     def __init__(self, mineps=0.01, maxeps=1.0, length=100000):

@@ -2,7 +2,7 @@ from torch import nn
 
 class NatureDQN(nn.Module):
     def __init__(self, num_actions):
-        Super().__init__()
+        super().__init__()
 
         self.num_actions = num_actions
         self.seq = nn.Sequential(
